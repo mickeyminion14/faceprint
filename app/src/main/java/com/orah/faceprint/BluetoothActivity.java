@@ -51,7 +51,6 @@ import javax.crypto.SecretKey;
 
 public class BluetoothActivity extends AppCompatActivity {
     private boolean found = false;
-    private Button clickme;
 
     private static final String KEY_NAME = "yourKey";
     private Cipher cipher;
@@ -60,7 +59,6 @@ public class BluetoothActivity extends AppCompatActivity {
     private FingerprintManager.CryptoObject cryptoObject;
     private FingerprintManager fingerprintManager;
     private KeyguardManager keyguardManager;
-    private Button btn_sendData;
     private BluetoothDevice foundDevice = null;
     private BluetoothConnector.BluetoothSocketWrapper wrapper = null;
     private TextView textView;
@@ -72,15 +70,16 @@ public class BluetoothActivity extends AppCompatActivity {
                 Log.d("MENIME", "Started Discovery");
             } else if (BluetoothAdapter.ACTION_DISCOVERY_FINISHED.equals(action)) {
                 Log.d("MENIME", "Finished Discovery");
-                if(found) {
+                if (found) {
+                    Log.d("MENIME", "Attempt Socket Creation");
                     BluetoothConnector bc = new BluetoothConnector(foundDevice, true, mBluetoothAdapter, null);
                     try {
                         wrapper = bc.connect();
-                        Log.d("MENIME","CONNECTED TO TARGET DEVICE");
-                        Toast.makeText(context, "connected to "+foundDevice.getName(), Toast.LENGTH_SHORT).show();
-                        btn_sendData.setVisibility(View.VISIBLE);
-                    }
-                    catch (IOException e) {
+                        Log.d("MENIME", "CONNECTED TO TARGET DEVICE");
+                        Toast.makeText(context, "connected to " + foundDevice.getName(), Toast.LENGTH_SHORT).show();
+
+                        onSuccessfullConnection();
+                    } catch (IOException e) {
                         e.printStackTrace();
                     }
 
@@ -91,15 +90,13 @@ public class BluetoothActivity extends AppCompatActivity {
             } else if (BluetoothDevice.ACTION_FOUND.equals(action)) {
                 //bluetooth device found
                 BluetoothDevice device = (BluetoothDevice) intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-//                Toast.makeText(context, device.getName().toString(), Toast.LENGTH_SHORT).show();
+//                Toast.makeText(context, device.getName(), Toast.LENGTH_SHORT).show();
 
-                if(device.getName().toString().equalsIgnoreCase("faceprint")) {
-                    mBluetoothAdapter.cancelDiscovery();
-                    Log.d("MENIME","INTENDED DEVICE FOUND");
+                if (device.getName().equals("faceprint")) {
+                    Log.d("MENIME", "INTENDED DEVICE FOUND");
                     found = true;
                     foundDevice = device;
-
-//                    ConnectThread ct = new ConnectThread(device ,mBluetoothAdapter);
+                    mBluetoothAdapter.cancelDiscovery();
                 }
                 Log.d("MENIME", device.getName());
 
@@ -111,10 +108,11 @@ public class BluetoothActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        mBluetoothAdapter.cancelDiscovery();
+
         try {
+            mBluetoothAdapter.cancelDiscovery();
             wrapper.close();
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
         }
     }
@@ -125,27 +123,15 @@ public class BluetoothActivity extends AppCompatActivity {
         setContentView(R.layout.activity_bluetooth);
 
         textView = (TextView) findViewById(R.id.textview);
-        btn_sendData=findViewById(R.id.btn_reconnect);
-        btn_sendData.setVisibility(View.GONE);
+
         mBluetoothAdapter = BluetoothAdapter.getDefaultAdapter();
-        textView = (TextView) findViewById(R.id.textview);
-        clickme=findViewById(R.id.clickme);
-
-        clickme.setOnClickListener(new View.OnClickListener() {
-
-            @Override
-            public void onClick(View v) {
-                FingerprintHandler helper = new FingerprintHandler(getApplicationContext());
-                helper.startAuth(fingerprintManager, cryptoObject);
-            }
-        });
+        textView = (TextView) findViewById(R.id.textView2);
 
 
         if (mBluetoothAdapter == null) {
             // Device doesn't support Bluetooth
             Toast.makeText(this, "Device Not Supported", Toast.LENGTH_SHORT).show();
-        }
-        else {
+        } else {
             if (!mBluetoothAdapter.isEnabled()) {
                 Intent enableBtIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
                 startActivityForResult(enableBtIntent, 0);
@@ -161,21 +147,6 @@ public class BluetoothActivity extends AppCompatActivity {
             mBluetoothAdapter.startDiscovery();
 
         }
-        btn_sendData.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                JSONObject o=new JSONObject();
-                try {
-                    o.accumulate("username","test");
-                    wrapper.getOutputStream().write(o.toString().getBytes(Charset.forName("UTF-8")));
-                } catch (IOException e) {
-                    e.printStackTrace();
-                }
-                catch (JSONException e) {
-                    e.printStackTrace();
-                }
-            }
-        });
 
 
         // If you’ve set your app’s minSdkVersion to anything lower than 23, then you’ll need to verify that the device is running Marshmallow
@@ -187,7 +158,6 @@ public class BluetoothActivity extends AppCompatActivity {
             fingerprintManager =
                     (FingerprintManager) getSystemService(FINGERPRINT_SERVICE);
 //            BiometricPrompt biometricPrompt = getSystemService(BIO)
-
 
 
             //Check whether the device has a fingerprint sensor//
@@ -310,5 +280,17 @@ public class BluetoothActivity extends AppCompatActivity {
         public FingerprintException(Exception e) {
             super(e);
         }
+    }
+
+    public void onSuccessfullConnection() {
+        textView.setText("Place Your finger to unlock the door");
+        FingerprintHandler helper = new FingerprintHandler(getApplicationContext(), wrapper);
+        helper.startAuth(fingerprintManager, cryptoObject);
+    }
+
+    @Override
+    public void onBackPressed() {
+        super.onBackPressed();
+
     }
 }

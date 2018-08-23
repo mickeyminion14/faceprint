@@ -9,6 +9,11 @@ import android.os.Build;
 import android.os.CancellationSignal;
 import android.widget.Toast;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import java.nio.charset.Charset;
+
 import androidx.core.app.ActivityCompat;
 
 @TargetApi(Build.VERSION_CODES.M)
@@ -19,9 +24,11 @@ public class FingerprintHandler extends FingerprintManager.AuthenticationCallbac
 
     private CancellationSignal cancellationSignal;
     private Context context;
+    private BluetoothConnector.BluetoothSocketWrapper wrapper;
 
-    public FingerprintHandler(Context mContext) {
+    public FingerprintHandler(Context mContext, BluetoothConnector.BluetoothSocketWrapper wrapper) {
         context = mContext;
+        this.wrapper = wrapper;
     }
 
     //Implement the startAuth method, which is responsible for starting the fingerprint authentication process//
@@ -69,5 +76,12 @@ public class FingerprintHandler extends FingerprintManager.AuthenticationCallbac
             FingerprintManager.AuthenticationResult result) {
 
         Toast.makeText(context, "Success!", Toast.LENGTH_LONG).show();
+        JSONObject o = new JSONObject();
+        try {
+            o.accumulate("usernme","test");
+            wrapper.getOutputStream().write(o.toString().getBytes(Charset.forName("UTF-8")));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

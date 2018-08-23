@@ -23,6 +23,7 @@ public class MainActivity extends AppCompatActivity {
     private EditText username, password;
     public static SharedPreferences p;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -33,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
         if(p.getString("email","").equalsIgnoreCase("test")&& p.getString("password","").equalsIgnoreCase("1234")) {
             Intent i =new Intent(getApplicationContext(),BluetoothActivity.class);
             startActivity(i);
+            finish();
         }
         btn_submit = findViewById(R.id.btn_submit);
         username = findViewById(R.id.username);
@@ -55,7 +57,7 @@ public class MainActivity extends AppCompatActivity {
             String password1=password.getText().toString().trim();
         if (email.equalsIgnoreCase("test") && password1.equalsIgnoreCase("1234")) {
 
-            Toast.makeText(this, "SUCCESS", Toast.LENGTH_SHORT).show();
+//            Toast.makeText(this, "SUCCESS", Toast.LENGTH_SHORT).show();
             Intent i = new Intent(this, BluetoothActivity.class);
             LOGGED_IN = true;
             SharedPreferences.Editor ed=p.edit();
@@ -63,6 +65,7 @@ public class MainActivity extends AppCompatActivity {
             ed.putString("password",password1);
             ed.commit();
             startActivity(i);
+            finish();
         } else {
             Toast.makeText(this, "Username or Password Incorrect !", Toast.LENGTH_SHORT).show();
         }
